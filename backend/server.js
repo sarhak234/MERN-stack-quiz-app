@@ -6,13 +6,17 @@ const connectDb=require('./config/database')
 const cookieparser=require('cookie-parser');
 const cors=require('cors');
 
-app.use(cors())
+app.use(cors());
+
 
 
 app.use(cookieparser())
  
 app.use(express.json())
 
+app.get('/',(req,res)=>{
+    res.send('api is running')
+})
 app.use('/api',router)
 connectDb().then(()=>{
     app.listen(process.env.PORT,()=>{
