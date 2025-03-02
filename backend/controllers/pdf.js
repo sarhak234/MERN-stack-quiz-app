@@ -1,31 +1,58 @@
-const jwt = require('jsonwebtoken');
-const User = require('../model/user');
-const QueModel = require('../model/questions');
+const jwt = require("jsonwebtoken");
+const User = require("../model/user");
+const Result = require("../model/userresult");
 
-const usertest = async (req, res) => {
-    const token = req.cookies['quetest'];
+const saveQuizResults = async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
 
-    if (!token) {
-        return res.status(401).send('No token found');
+  if (!token) return res.status(401).send("No token found");
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    if (err) {
+      return res.status(403).send(err.name === "TokenExpiredError" ? "Token has expired" : "Invalid token");
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-        if (err) {
-            if (err.name === 'TokenExpiredError') {
-                return res.status(403).send('Token has expired');
-            }
-            return res.status(403).send('Invalid token');
-        }
+    try {
+      const userdata = await User.findById(decoded.id);
+      if (!userdata) return res.status(404).send("User not found");
 
-        try {
-            const userdata = await User.findById(decoded.id);
+      const { results } = req.body;
 
-            res.status(200).json(userdata);
-        } catch (error) {
-            console.error('Error fetching questions:', error);
-            return res.status(500).send('An error occurred while fetching questions');
-        }
-    });
+      if (!results || !Array.isArray(results) || results.length === 0) {
+        return res.status(400).send("Invalid or missing quiz results");
+      }
+
+      // 🔹 Find testcode from User model
+      const testCode = userdata.testcode; // Assuming `testcode` is stored in User model
+
+      if (!testCode) {
+        return res.status(400).send("Test code not found for user");
+      }
+
+      // Save results to the database
+      const newResult = new Result({
+        userId: userdata._id,
+        name: userdata.name,
+        userclass: userdata.userclass,
+        testcode: testCode, // Taken from User model
+        results,
+      });
+
+      await newResult.save();
+
+      // Send back saved data to frontend
+      res.status(201).json({
+        message: "Quiz results saved successfully",
+        name: userdata.name,
+        userclass: userdata.userclass,
+        testcode: testCode,
+        results,
+      });
+    } catch (error) {
+      console.error("Error saving quiz results:", error);
+      res.status(500).send("An error occurred while saving quiz results");
+    }
+  });
 };
 
-module.exports = usertest;
+module.exports = saveQuizResults;

@@ -1,18 +1,23 @@
-require('dotenv').config({path:'backend/config/.env'})
+require('dotenv').config({ path: './config/.env' });
 const express=require('express');
 const app=express();
 const router=require('./routes/userauth')
 const connectDb=require('./config/database')
-const cookieparser=require('cookie-parser');
+const cookieparser=require('cookie-parser')
 const cors=require('cors');
 
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5173", 
+    credentials: true
+}));
 
 
 
 app.use(cookieparser())
  
-app.use(express.json())
+app.use(express.json());
+
+app.use(express.urlencoded({ extended: true })); 
 
 app.get('/',(req,res)=>{
     res.send('api is running')

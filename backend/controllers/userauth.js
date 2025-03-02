@@ -1,13 +1,16 @@
 const jwt = require('jsonwebtoken');
 const User = require('../model/user');
+const Question = require('../model/questions'); // Import the Question model
 
 const userauth = async (req, res) => {
     try {
         const { name, userclass, testcode } = req.body;
 
-        // Check if all required fields are provided
-        if (!name || !userclass || !testcode) {
-            return res.status(400).json({ error: 'You must provide name, userclass, and testcode.' });
+        // Check if the testcode exists in the database
+        const testExists = await Question.findOne({ "questions.testcode": testcode });
+
+        if (!testExists) {
+            return res.status(400).json({ error: 'Invalid test code. Please enter a valid test code.' });
         }
 
         // Create a new user in the database
@@ -17,19 +20,13 @@ const userauth = async (req, res) => {
             testcode,
         });
 
+        // Generate JWT token
         const usertoken = jwt.sign({ id: usermodel._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.cookie('quetest', usertoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'lax',
-        });
-
-     
-        return res.status(201).json({ message: 'User created successfully.' });
+        return res.status(201).json({ message: 'User created successfully.', token: usertoken });
 
     } catch (error) {
-        console.error(error);
+        console.error('Error in user authentication:', error);
         res.status(500).json({ error: 'An error occurred while creating the user.' });
     }
 };
