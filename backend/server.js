@@ -5,6 +5,8 @@ const router=require('./routes/userauth')
 const connectDb=require('./config/database')
 const cookieparser=require('cookie-parser')
 const cors=require('cors');
+const path = require('path');
+
 
 app.use(cors({
     origin: "http://localhost:5173", 
@@ -12,6 +14,8 @@ app.use(cors({
 }));
 
 
+
+app.use(express.static(path.join(__dirname, 'build')));
 
 app.use(cookieparser())
  
