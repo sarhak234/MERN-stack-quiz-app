@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import React, { useState } from 'react'; 
+import { Link, useNavigate } from 'react-router-dom'; 
+import axios from 'axios'; 
+import { toast } from 'react-hot-toast'; 
 
 function Login() {
   const [name, setname] = useState('');
   const [userclass, setuserclass] = useState('');
   const [testcode, settestcode] = useState('');
   const [testCodeError, setTestCodeError] = useState(''); // Store test code error
+  const [loading, setLoading] = useState(false); // Loading state
 
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     setTestCodeError(''); // Reset error before request
-
+    setLoading(true); // Set loading to true
+    
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/auth`, { 
-        name, 
-        userclass, 
-        testcode 
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/auth`, {
+        name,
+        userclass,
+        testcode
       });
 
       console.log("Response:", response.data);
@@ -33,12 +35,13 @@ function Login() {
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       
-      // Check if error is due to invalid test code
       if (error.response?.data?.error === 'Invalid test code. Please enter a valid test code.') {
         setTestCodeError('Invalid test code. Please enter a valid test code.');
       } else {
         toast.error(error.response?.data?.error || 'An error occurred');
       }
+    } finally {
+      setLoading(false); // Set loading to false after request completes
     }
   };
 
@@ -49,66 +52,42 @@ function Login() {
 
         {/* Name Input */}
         <div className="mb-4">
-          <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">
-            Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            placeholder="Enter your name"
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400"
-            onChange={(e) => setname(e.target.value)}
-          />
+          <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Name</label>
+          <input type="text" id="name" placeholder="Enter your name" className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400" onChange={(e) => setname(e.target.value)} />
         </div>
 
         {/* Class Input */}
         <div className="mb-4">
-          <label htmlFor="class" className="block text-gray-700 text-sm font-bold mb-2">
-            Class
-          </label>
-          <input
-            type="text"
-            id="class"
-            placeholder="Enter your class"
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400"
-            onChange={(e) => setuserclass(e.target.value)}
-          />
+          <label htmlFor="class" className="block text-gray-700 text-sm font-bold mb-2">Class</label>
+          <input type="text" id="class" placeholder="Enter your class" className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400" onChange={(e) => setuserclass(e.target.value)} />
         </div>
 
         {/* Test Code Input */}
         <div className="mb-6">
-          <label htmlFor="testcode" className="block text-gray-700 text-sm font-bold mb-2">
-            Test Code
-          </label>
-          <input
-            type="text"
-            id="testcode"
-            placeholder="Enter your test code"
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400"
-            onChange={(e) => settestcode(e.target.value)}
-          />
-          {/* Show error message if test code is invalid */}
+          <label htmlFor="testcode" className="block text-gray-700 text-sm font-bold mb-2">Test Code</label>
+          <input type="text" id="testcode" placeholder="Enter your test code" className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-cyan-400" onChange={(e) => settestcode(e.target.value)} />
           {testCodeError && <p className="text-red-500 text-sm mt-1">{testCodeError}</p>}
         </div>
 
         {/* Login Button */}
-        <button
-          className="w-full bg-cyan-400 text-white py-2 rounded-lg font-bold hover:bg-cyan-500 focus:outline-none mb-4"
-          onClick={handleLogin}
-        >
-          Login
+        <button className="w-full bg-cyan-400 text-white py-2 rounded-lg font-bold hover:bg-cyan-500 focus:outline-none mb-4 flex justify-center items-center gap-2" onClick={handleLogin} disabled={loading}>
+          {loading ? (
+            <>
+              <p>Login</p>
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+            </>
+          ) : (
+            'Login'
+          )}
         </button>
 
         {/* Link to Admin Login */}
         <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Are you a teacher?{' '}
-            <Link
-              to="/adminlogin"
-              className="text-cyan-500 hover:text-cyan-600 font-semibold"
-            >
-              Sign in as a teacher
-            </Link>
+          <p className="text-sm text-gray-600">Are you a teacher?{' '}
+            <Link to="/adminlogin" className="text-cyan-500 hover:text-cyan-600 font-semibold">Sign in as a teacher</Link>
           </p>
         </div>
       </div>
