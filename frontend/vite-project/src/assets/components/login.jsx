@@ -8,8 +8,8 @@ function Login() {
   const [userclass, setuserclass] = useState('');
   const [testcode, settestcode] = useState('');
   const [testCodeError, setTestCodeError] = useState(''); // Store test code error
-  const [loading, setLoading] = useState(false); // Loading state
-
+  const [loading, setLoading] = useState(false);
+  const [showPopup,setShowPopup]=useState(true) ;
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -47,6 +47,30 @@ function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      {showPopup && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
+            <h1 className="text-xl font-bold text-blue-600 mb-4 flex justify-center items-center">
+              📋 Test Instructions
+            </h1>
+            <ul className="text-sm text-gray-700 text-left space-y-2">
+              <li>🌐 Ensure a stable internet connection before starting the test.</li>
+              <li>🆔 Fill in your details correctly. Use the provided unique test code.</li>
+              <li>✅ Each question has only one correct option. Choose carefully.</li>
+              <li>⏳ You have 30 minutes to complete the test. The timer starts once you begin.</li>
+              <li>⬆ Click the "Submit Test" button once you are done. The test auto-submits when time ends.</li>
+              <li>🚫 Avoid using unfair means; the test is monitored for integrity.</li>
+              <li>💻 Do not interrupt the test window. Any interruption will be recorded.</li>
+            </ul>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-600"
+              onClick={() => setShowPopup(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md">
         <h1 className="text-xl sm:text-2xl font-bold text-center mb-6">Student Login</h1>
 
