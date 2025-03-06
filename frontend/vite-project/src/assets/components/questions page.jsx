@@ -4,6 +4,15 @@ import axios from "axios";
 import { Toaster, toast } from "react-hot-toast";
 import Header from "./header";
 
+// Utility function to shuffle an array
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 function QuestionsPage() {
   const [data, setData] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -36,9 +45,17 @@ function QuestionsPage() {
           { token },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setData(response.data);
 
-        const numQuestions = response.data.questions.length || 10;
+        // Shuffle options for each question
+        const shuffledData = response.data.questions.map((question) => ({
+          ...question,
+          options: shuffleArray([...question.options]), // Shuffle the options
+        }));
+
+        setData({ ...response.data, questions: shuffledData });
+        console.log("Fetched data with shuffled options:", shuffledData);
+
+        const numQuestions = shuffledData.length || 10;
         const quizTime =
           parseInt(localStorage.getItem("quizTime")) || numQuestions * 60;
 
@@ -172,39 +189,34 @@ function QuestionsPage() {
       <div className="w-full max-w-3xl p-6 mt-24">
         {data ? (
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            {data.questions.map(
-              (
-                q,
-                index // Added `index` to the map function
-              ) => (
-                <div
-                  key={q.id}
-                  className="p-5 border rounded-xl bg-gray-50 shadow-sm"
-                >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    {index + 1}. {q.question} {/* Added question number here */}
-                  </h3>
-                  <div className="space-y-2">
-                    {q.options.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() =>
-                          setAnswers((prev) => ({ ...prev, [q.id]: option }))
-                        }
-                        className={`w-full p-2 sm:p-3 text-xs sm:text-sm md:text-base font-medium rounded-lg border transition-all text-left ${
-                          answers[q.id] === option
-                            ? "bg-cyan-400 text-white border-cyan-500 shadow-md"
-                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
+            {data.questions.map((q, index) => (
+              <div
+                key={q.id}
+                className="p-5 border rounded-xl bg-gray-50 shadow-sm"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {index + 1}. {q.question}
+                </h3>
+                <div className="space-y-2">
+                  {q.options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() =>
+                        setAnswers((prev) => ({ ...prev, [q.id]: option }))
+                      }
+                      className={`w-full p-2 sm:p-3 text-xs sm:text-sm md:text-base font-medium rounded-lg border transition-all text-left ${
+                        answers[q.id] === option
+                          ? "bg-cyan-400 text-white border-cyan-500 shadow-md"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
-              )
-            )}
+              </div>
+            ))}
 
             <button
               onClick={handleSubmit}
