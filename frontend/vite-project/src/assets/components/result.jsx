@@ -94,10 +94,20 @@ const generatePDF = () => {
   
       // **User Info**
       doc.setFontSize(12);
+
+      // **Name** (Left-aligned)
       doc.text(`Name: ${userInfo.name || "N/A"}`, margin, yPosition);
-      doc.text(`Class: ${userInfo.userclass || "N/A"}`, pageWidth / 2, yPosition);
-      doc.text(`Test Code: ${userInfo.testcode || "N/A"}`, pageWidth - margin - 50, yPosition);
-      yPosition += 20;
+      
+      // **Class** (Centered)
+      const classText = `Class: ${userInfo.userclass || "N/A"}`;
+      const classTextWidth = doc.getTextWidth(classText); // Calculate width of the text
+      doc.text(classText, (pageWidth - classTextWidth) / 2, yPosition); // Center the text
+      
+      // **Test Code** (Right-aligned)
+      const testCodeText = `Test Code: ${userInfo.testcode || "N/A"}`;
+      doc.text(testCodeText, pageWidth - margin - doc.getTextWidth(testCodeText), yPosition); // Right-align the text
+      
+      yPosition += 20; 
   
       // **Questions and Answers**
       doc.setFontSize(12);
