@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Toaster, toast } from "react-hot-toast";
+import Header from "./header";
 
 function QuestionsPage() {
   const [data, setData] = useState(null);
@@ -20,7 +21,7 @@ function QuestionsPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/user/auth");
+      navigate("/");
       return;
     }
 
@@ -104,13 +105,9 @@ function QuestionsPage() {
   const handleSubmit = async () => {
     if (!data) return;
 
-    // Check if all questions have been answered
     const unansweredQuestions = data.questions.filter(q => !answers[q.id]);
     if (unansweredQuestions.length > 0 && timeLeft > 0) {
-      toast.error(
-        `⚠️ Please answer all questions first! (${unansweredQuestions.length} question${unansweredQuestions.length > 1 ? 's' : ''} remaining)`,
-        { duration: 3000 }
-      );
+      toast.error(`⚠️ Please answer all questions first! (${unansweredQuestions.length} question${unansweredQuestions.length > 1 ? 's' : ''} remaining)`, { duration: 3000 });
       return;
     }
 
@@ -119,10 +116,10 @@ function QuestionsPage() {
     const resultArray = data.questions.map((q) => {
       const userAnswer = answers[q.id] || null;
       const isCorrect = userAnswer === q.answer ? "Correct" : "Not Correct";
-
       return {
         question: q.question,
         options: q.options,
+        explaination:q.explaination,
         userAnswer: userAnswer,
         correctAnswer: q.answer,
       };
@@ -148,34 +145,26 @@ function QuestionsPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-white text-gray-800">
-      {/* Toaster Component */}
+      <Header />
       <Toaster position="top-center" reverseOrder={false} />
 
-      {/* Timer Header */}
-      <div className="w-full py-4 text-orange-700 text-center font-semibold text-lg">
-        ⏳ Time Left: {formatTime(timeLeft)}
+      <div className="w-full fixed top-[5rem] left-0 bg-white shadow-md py-4 text-center text-lg font-semibold text-orange-700 z-50 border-b border-gray-300">
+        ⏳ Time Left: {formatTime(timeLeft)} | 👁️‍🗨️ Screen Minimized: {minimizeCount} times
       </div>
 
-      {/* Quiz Content */}
-      <div className="w-full max-w-3xl p-6">
+      <div className="w-full max-w-3xl p-6 mt-24">
         {data ? (
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {data.questions.map((q) => (
               <div key={q.id} className="p-5 border rounded-xl bg-gray-50 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">{q.question}</h3>
-
-                {/* Vertical Options */}
                 <div className="space-y-2">
                   {q.options.map((option) => (
                     <button
                       key={option}
                       type="button"
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: option }))}
-                      className={`w-full p-2 sm:p-3 text-xs sm:text-sm md:text-base font-medium rounded-lg border transition-all text-left ${
-                        answers[q.id] === option
-                          ? "bg-cyan-400 text-white border-cyan-500 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                      }`}
+                      className={`w-full p-2 sm:p-3 text-xs sm:text-sm md:text-base font-medium rounded-lg border transition-all text-left ${answers[q.id] === option ? "bg-cyan-400 text-white border-cyan-500 shadow-md" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"}`}
                     >
                       {option}
                     </button>
@@ -184,10 +173,7 @@ function QuestionsPage() {
               </div>
             ))}
 
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-cyan-400 text-white py-3 rounded-lg font-medium hover:bg-cyan-500 transition"
-            >
+            <button onClick={handleSubmit} className="w-full bg-cyan-400 text-white py-3 rounded-lg font-medium hover:bg-cyan-500 transition">
               Submit Answers
             </button>
           </form>
