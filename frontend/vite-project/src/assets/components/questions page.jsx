@@ -164,7 +164,7 @@ function QuestionsPage() {
       <Header />
       <Toaster position="top-center" reverseOrder={false} />
 
-      <div className="w-full fixed top-[5rem] left-0 bg-white shadow-md py-4 text-center text-lg font-semibold text-orange-700 z-50 border-b border-gray-300">
+      <div className="w-full fixed top-[5rem] left-0 bg-white shadow-md py-4 text-center text-lg font-semibold text-orange-700 z-50 border-b mt-0 border-gray-300">
         ⏳ Time Left: {formatTime(timeLeft)} | 👁️‍🗨️ Screen Minimized:{" "}
         {minimizeCount} times
       </div>
