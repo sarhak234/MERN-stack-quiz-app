@@ -70,7 +70,7 @@ function ResultPage() {
     setMinimizeCount(count);
   }, []);
 
-  const generatePDF = () => {
+const generatePDF = () => {
     if (!userInfo || quizResults.length === 0) {
       console.error("Data is missing for PDF generation.");
       return;
@@ -79,6 +79,8 @@ function ResultPage() {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15; // Margin for left and right sides
       let yPosition = 20;
   
       // **Header**
@@ -92,40 +94,42 @@ function ResultPage() {
   
       // **User Info**
       doc.setFontSize(12);
-      doc.text(`Name: ${userInfo.name || "N/A"}`, 15, yPosition);
+      doc.text(`Name: ${userInfo.name || "N/A"}`, margin, yPosition);
       doc.text(`Class: ${userInfo.userclass || "N/A"}`, pageWidth / 2, yPosition);
-      doc.text(`Test Code: ${userInfo.testcode || "N/A"}`, pageWidth - 60, yPosition);
+      doc.text(`Test Code: ${userInfo.testcode || "N/A"}`, pageWidth - margin - 50, yPosition);
       yPosition += 20;
   
       // **Questions and Answers**
       doc.setFontSize(12);
       quizResults.forEach((q, index) => {
-        if (yPosition > 260) {
+        if (yPosition > pageHeight - 50) { // Add a new page if we're near the bottom
           doc.addPage();
           yPosition = 20;
         }
   
         // **Question**
         doc.setFont("helvetica", "bold");
-        doc.text(`${index + 1}. ${q.question || "No question provided"}`, 15, yPosition);
-        yPosition += 10;
+        const questionText = `${index + 1}. ${q.question || "No question provided"}`;
+        const questionLines = doc.splitTextToSize(questionText, pageWidth - 8 * margin); // Wrap text
+        doc.text(questionLines, margin, yPosition);
+        yPosition += 10 * questionLines.length; // Adjust yPosition based on the number of lines
   
         // **User Answer**
         doc.setFont("helvetica", "normal");
-        doc.text(`Your Answer: ${q.userAnswer || "N/A"}`, 20, yPosition);
+        doc.text(`Your Answer: ${q.userAnswer || "N/A"}`, margin + 5, yPosition);
         yPosition += 10;
   
         // **Correct Answer**
-        doc.text(`Correct Answer: ${q.correctAnswer || "N/A"}`, 20, yPosition);
+        doc.text(`Correct Answer: ${q.correctAnswer || "N/A"}`, margin + 5, yPosition);
         yPosition += 10;
   
         // **Result Indicator**
         if (q.userAnswer === q.correctAnswer) {
           doc.setTextColor(0, 150, 0);
-          doc.text("Correct", pageWidth - 40, yPosition - 20);
+          doc.text("Correct", pageWidth - margin - 40, yPosition - 20);
         } else {
           doc.setTextColor(200, 0, 0);
-          doc.text("Incorrect", pageWidth - 40, yPosition - 20);
+          doc.text("Incorrect", pageWidth - margin - 40, yPosition - 20);
         }
         doc.setTextColor(0, 0, 0);
   
@@ -133,24 +137,30 @@ function ResultPage() {
         doc.setFont("helvetica", "italic");
         doc.setTextColor(80, 80, 80);
         const explanationText = `Explanation: ${q.explaination || "No explanation provided"}`;
-        doc.text(explanationText, 20, yPosition, { maxWidth: 170 });
-        yPosition += 20;
+        const explanationLines = doc.splitTextToSize(explanationText, pageWidth - 8.5 * margin); // Wrap text
+        doc.text(explanationLines, margin + 5, yPosition);
+        yPosition += 10 * explanationLines.length; // Adjust yPosition based on the number of lines
   
         // **Separator**
         doc.setDrawColor(200, 200, 200);
-        doc.line(10, yPosition, pageWidth - 10, yPosition);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
         yPosition += 10;
       });
   
       // **Final Score & Minimize Count**
+      if (yPosition > pageHeight - 30) { // Add a new page if there's not enough space
+        doc.addPage();
+        yPosition = 20;
+      }
+  
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
   
-      doc.text(`Screen Minimized: ${minimizeCount} times`, 15, yPosition);
+      doc.text(`Screen Minimized: ${minimizeCount} times`, margin, yPosition);
       yPosition += 10;
   
-      doc.text(`Final Score: ${quizResults.filter(q => q.userAnswer === q.correctAnswer).length} / ${quizResults.length}`, 15, yPosition);
+      doc.text(`Final Score: ${quizResults.filter(q => q.userAnswer === q.correctAnswer).length} / ${quizResults.length}`, margin, yPosition);
       yPosition += 10;
   
       // Save the PDF
