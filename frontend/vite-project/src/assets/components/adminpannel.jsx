@@ -20,7 +20,7 @@ function AdminPannel() {
   
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/question/uploading/page`,
-        { questions: parsedQuestions, testcode }, // Send testcode separately
+        { questions: parsedQuestions, testcode }, 
         {
           headers: {
             'Content-Type': 'application/json',

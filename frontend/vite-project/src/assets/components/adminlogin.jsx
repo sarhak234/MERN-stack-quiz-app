@@ -7,22 +7,27 @@ function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [redirect, setRedirect] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(''); // State for error message
+  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false); // State for loading animation
 
   const handleSubmit = async () => {
+    setErrorMessage('');
+    setLoading(true);
+    
     try {
-      setErrorMessage(''); // Reset error before making the request
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
       const response = await axios.post(`${API_URL}/api/admin/auth`, { name, email, password });
 
       if (response.status === 200) {
         setRedirect(true);
       } else {
-        setErrorMessage('Something went wrong. Please try again.'); // Set error if login fails
+        setErrorMessage('Something went wrong. Please try again.');
       }
     } catch (error) {
-      setErrorMessage('Something went wrong. Please try again.'); // Display error message
+      setErrorMessage('Something went wrong. Please try again.');
       console.error("Error:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,10 +86,21 @@ function AdminLogin() {
 
         {/* Login Button */}
         <button
-          className="w-full bg-cyan-400 text-white py-2 rounded-lg font-bold hover:bg-cyan-500 focus:outline-none mb-4"
+          className="w-full bg-cyan-400 text-white py-2 rounded-lg font-bold flex items-center justify-center hover:bg-cyan-500 focus:outline-none mb-4"
           onClick={handleSubmit}
+          disabled={loading}
         >
-          Login
+          {loading ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              Logging in...
+            </>
+          ) : (
+            "Login"
+          )}
         </button>
 
         {/* Link to Student Login */}

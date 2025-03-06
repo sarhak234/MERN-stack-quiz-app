@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './config/.env' });
+require('dotenv').config({ path: '.env' });
 const express=require('express');
 const app=express();
 const router=require('./routes/userauth')
@@ -9,7 +9,7 @@ const path = require('path');
 
 
 app.use(cors({
-    origin: "/", 
+    origin: "*", 
     credentials: true
 }));
 
