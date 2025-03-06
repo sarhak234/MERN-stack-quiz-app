@@ -104,12 +104,11 @@ function QuestionsPage() {
   const handleSubmit = async () => {
     if (!data) return;
 
-    const unansweredQuestions = data.questions.filter((q) => !answers[q.id]);
+    // Check if all questions have been answered
+    const unansweredQuestions = data.questions.filter(q => !answers[q.id]);
     if (unansweredQuestions.length > 0 && timeLeft > 0) {
       toast.error(
-        `⚠️ Please answer all questions first! (${unansweredQuestions.length} question${
-          unansweredQuestions.length > 1 ? "s" : ""
-        } remaining)`,
+        `⚠️ Please answer all questions first! (${unansweredQuestions.length} question${unansweredQuestions.length > 1 ? 's' : ''} remaining)`,
         { duration: 3000 }
       );
       return;
@@ -117,17 +116,23 @@ function QuestionsPage() {
 
     setLoading(true);
 
-    const resultArray = data.questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-      userAnswer: answers[q.id] || null,
-      explaination: q.explaination,
-      correctAnswer: q.answer,
-    }));
+    const resultArray = data.questions.map((q) => {
+      const userAnswer = answers[q.id] || null;
+      const isCorrect = userAnswer === q.answer ? "Correct" : "Not Correct";
+
+      return {
+        question: q.question,
+        options: q.options,
+        userAnswer: userAnswer,
+        correctAnswer: q.answer,
+      };
+    });
 
     localStorage.setItem("quizResults", JSON.stringify(resultArray));
 
-    toast.success("✅ Answers submitted successfully!", { duration: 3000 });
+    toast.success("✅ Answers submitted successfully!", {
+      duration: 3000,
+    });
 
     setTimeout(() => {
       setLoading(false);
@@ -142,24 +147,24 @@ function QuestionsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white text-gray-800 relative px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col items-center bg-white text-gray-800">
+      {/* Toaster Component */}
       <Toaster position="top-center" reverseOrder={false} />
-      
-      <div className="w-full text-orange-700 bg-white py-2 text-center font-semibold text-sm sm:text-base md:text-lg">
-        ⏳ Time Left: {timeLeft !== null ? formatTime(timeLeft) : "Loading..."}
-      </div>
-      <div className="w-full text-center bg-white text-red-600 font-semibold py-2 text-sm sm:text-base md:text-lg">
-        Screen Minimized: {minimizeCount} times
+
+      {/* Timer Header */}
+      <div className="w-full py-4 text-orange-700 text-center font-semibold text-lg">
+        ⏳ Time Left: {formatTime(timeLeft)}
       </div>
 
-      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-4 sm:p-6">
+      {/* Quiz Content */}
+      <div className="w-full max-w-3xl p-6">
         {data ? (
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-4 sm:space-y-6">
-            {data.questions.map((q, index) => (
-              <div key={q.id} className="p-4 sm:p-5 border rounded-xl bg-gray-50 shadow-sm">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
-                  Question {index + 1}: {q.question}
-                </h3>
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            {data.questions.map((q) => (
+              <div key={q.id} className="p-5 border rounded-xl bg-gray-50 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{q.question}</h3>
+
+                {/* Vertical Options */}
                 <div className="space-y-2">
                   {q.options.map((option) => (
                     <button
@@ -178,16 +183,13 @@ function QuestionsPage() {
                 </div>
               </div>
             ))}
-            <div className="flex justify-center mt-4 sm:mt-6">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="bg-cyan-400 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-green-600 transition-all text-sm sm:text-base"
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Submit"}
-              </button>
-            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-cyan-400 text-white py-3 rounded-lg font-medium hover:bg-cyan-500 transition"
+            >
+              Submit Answers
+            </button>
           </form>
         ) : (
           <p className="text-center text-sm sm:text-base">Loading...</p>
