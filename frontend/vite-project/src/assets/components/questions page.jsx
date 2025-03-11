@@ -166,18 +166,18 @@ function QuestionsPage() {
 
       {/* Header Section */}
       <div className="w-full bg-white shadow-md py-3 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
+        <h1 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-2 sm:mb-0">
           Automaura IT Solutions
         </h1>
         <div className="flex items-center gap-2 sm:gap-4">
           <div
             className={`text-base sm:text-lg font-semibold ${
-              timeLeft <= 60 ? "text-red-500" : "text-blue-600"
+              timeLeft <= 60 ? "text-red-500" : "text-red-600"
             }`}
           >
             ⏳ {formatTime(timeLeft)}
           </div>
-          <span className="text-xs sm:text-sm text-gray-600">
+          <span className="text-xs sm:text-sm text-red-800">
             Minimized: {minimizeCount}
           </span>
         </div>
