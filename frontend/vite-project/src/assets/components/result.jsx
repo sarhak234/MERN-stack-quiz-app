@@ -135,95 +135,125 @@ function ResultPage() {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const maxWidth = pageWidth - 2 * margin;
       let yPosition = 20;
   
       // **Header**
-      doc.setFillColor(0, 188, 212);
-      doc.rect(0, 0, pageWidth, 30, "F");
-      doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
+      doc.setFontSize(18);
       const headerText = "Quiz Results";
       const headerWidth = doc.getTextWidth(headerText);
-      doc.text(headerText, (pageWidth - headerWidth) / 2, 20);
+      doc.text(headerText, (pageWidth - headerWidth) / 2, yPosition);
+      yPosition += 10;
   
-      // **User Info Box**
-      doc.setTextColor(0, 0, 0);
+      // **Name (Left)**
       doc.setFontSize(12);
-      doc.setFillColor(240, 240, 240);
-      doc.roundedRect(10, 35, pageWidth - 20, 25, 3, 3, "F");
-      doc.setFont("helvetica", "bold");
-      doc.text(`Name: ${userInfo.name || "N/A"}`, 15, 45);
-      doc.text(`Class: ${userInfo.userclass || "N/A"}`, pageWidth / 2 - 20, 45);
-      doc.text(`Test Code: ${userInfo.testcode || "N/A"}`, pageWidth - 60, 45);
-      yPosition = 65;
+      doc.setFont("helvetica", "normal");
+      const nameText = `Name: ${userInfo.name || "N/A"}`;
+      const nameLines = doc.splitTextToSize(nameText, maxWidth);
+      doc.text(nameLines, margin, yPosition);
+      yPosition += nameLines.length * 7 + 5;
+  
+      // **Class (Left)**
+      const classText = `Class: ${userInfo.userclass || "N/A"}`;
+      const classLines = doc.splitTextToSize(classText, maxWidth);
+      doc.text(classLines, margin, yPosition);
+      yPosition += classLines.length * 7 + 5;
+  
+      // **Test Code (Left)**
+      const testCodeText = `Test Code: ${userInfo.testcode || "N/A"}`;
+      const testCodeLines = doc.splitTextToSize(testCodeText, maxWidth);
+      doc.text(testCodeLines, margin, yPosition);
+      yPosition += testCodeLines.length * 7 + 5;
+  
+      // **Separator**
+      doc.setDrawColor(180, 180, 180);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 10;
   
       // **Questions and Answers**
       quizResults.forEach((q, index) => {
-        if (yPosition > 260) {
+        if (yPosition > pageHeight - 40) {
           doc.addPage();
           yPosition = 20;
         }
   
-        // **Question Box**
-        doc.setFillColor(220, 240, 255);
-        doc.roundedRect(10, yPosition, pageWidth - 20, 25, 3, 3, "F");
-        doc.setTextColor(0, 0, 0);
+        // **Question**
         doc.setFont("helvetica", "bold");
-        doc.text(`${index + 1}. ${q.question || "No question provided"}`, 15, yPosition + 10);
-  
-        yPosition += 30;
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0); // Ensure solid black for all questions
+        const questionText = `${index + 1}. ${q.question || "No question provided"}`;
+        const questionLines = doc.splitTextToSize(questionText, maxWidth);
+        doc.text(questionLines, margin, yPosition);
+        yPosition += questionLines.length * 7 + 5;
   
         // **User Answer**
         doc.setFont("helvetica", "normal");
-        doc.text(`Your Answer: ${q.userAnswer || "N/A"}`, 15, yPosition);
+        doc.setTextColor(0, 0, 0); // Reset to black
+        const userAnswerText = `Your Answer: ${q.userAnswer || "N/A"}`;
+        const userAnswerLines = doc.splitTextToSize(userAnswerText, maxWidth);
+        doc.text(userAnswerLines, margin, yPosition);
+        yPosition += userAnswerLines.length * 7;
   
         // **Correct Answer**
-        doc.text(`Correct Answer: ${q.correctAnswer || "N/A"}`, 15, yPosition + 10);
+        const correctAnswerText = `Correct Answer: ${q.correctAnswer || "N/A"}`;
+        const correctAnswerLines = doc.splitTextToSize(correctAnswerText, maxWidth);
+        doc.text(correctAnswerLines, margin, yPosition);
+        yPosition += correctAnswerLines.length * 7;
   
         // **Result Indicator**
+        doc.setFont("helvetica", "bold");
         if (q.userAnswer === q.correctAnswer) {
-          doc.setTextColor(0, 150, 0);
-          doc.text(" Correct", pageWidth - 40, yPosition);
+          doc.setTextColor(34, 139, 34); // Forest green
+          doc.text("Correct", pageWidth - margin - 30, yPosition - 7);
         } else {
-          doc.setTextColor(200, 0, 0);
-          doc.text("Incorrect", pageWidth - 40, yPosition);
+          doc.setTextColor(178, 34, 34); // Firebrick red
+          doc.text("Incorrect", pageWidth - margin - 30, yPosition - 7);
         }
-        doc.setTextColor(0, 0, 0);
-  
-        yPosition += 20;
+        doc.setTextColor(0, 0, 0); // Reset to black
+        yPosition += 10;
   
         // **Explanation**
-        const explanationText = `Explanation: ${q.explaination || "No explanation provided"}`;
         doc.setFont("helvetica", "italic");
-        doc.setTextColor(80, 80, 80);
-        doc.text(explanationText, 15, yPosition, { maxWidth: 170 });
-  
-        yPosition += 25;
+        doc.setTextColor(100, 100, 100); // Softer gray
+        const explanationText = `Explanation: ${q.explaination || "No explanation provided"}`;
+        const explanationLines = doc.splitTextToSize(explanationText, maxWidth);
+        doc.text(explanationLines, margin, yPosition);
+        yPosition += explanationLines.length * 7 + 5;
   
         // **Separator**
-        doc.setDrawColor(200, 200, 200);
-        doc.line(10, yPosition, pageWidth - 10, yPosition);
+        doc.setDrawColor(180, 180, 180);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
         yPosition += 10;
       });
   
       // **Final Score & Minimize Count**
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
   
-      doc.text(`Screen Minimized: ${minimizeCount} times`, 15, yPosition + 10);
+      doc.text(`Screen Minimized: ${minimizeCount} times`, margin, yPosition);
       yPosition += 15;
   
-      doc.text(`Final Score: ${quizResults.filter(q => q.userAnswer === q.correctAnswer).length} / ${quizResults.length}`, 15, yPosition + 10);
-      yPosition += 15;
+      doc.text(
+        `Final Score: ${quizResults.filter((q) => q.userAnswer === q.correctAnswer).length} / ${
+          quizResults.length
+        }`,
+        margin,
+        yPosition
+      );
   
       doc.save("Quiz_Result.pdf");
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
   };
-
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-4 sm:p-6">
@@ -243,8 +273,8 @@ function ResultPage() {
             {/* User Info */}
             <div className="bg-cyan-400 text-white p-4 rounded-lg mb-6 shadow-md">
               <p className="text-base sm:text-lg font-semibold">Name: {userInfo.name}</p>
-              <p className="text-base sm:text-lg font-semibold">Class: {userInfo.class}</p>
-              <p className="text-base sm:text-lg font-semibold">Test Code: {userInfo.testCode}</p>
+              <p className="text-base sm:text-lg font-semibold">Class: {userInfo.userclass}</p>
+              <p className="text-base sm:text-lg font-semibold">Test Code: {userInfo.testcode}</p>
             </div>
 
             {/* Results */}
