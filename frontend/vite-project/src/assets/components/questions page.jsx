@@ -212,7 +212,7 @@ function QuestionsPage() {
                       }
                       className={`w-full p-3 sm:p-4 text-left rounded-lg sm:rounded-xl border-2 transition-all duration-200 text-sm sm:text-base ${
                         answers[q.id] === option
-                          ? "bg-cyan-400 text-white border-blue-600 shadow-md"
+                          ? "bg-cyan-300 text-white border-cyan-400 shadow-md"
                           : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
                       }`}
                     >
