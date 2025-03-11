@@ -219,7 +219,7 @@ function ResultPage() {
         doc.setFont("helvetica", "italic");
         doc.setTextColor(100, 100, 100); // Softer gray
         const explanationText = `Explanation: ${q.explaination || "No explanation provided"}`;
-        const explanationLines = doc.splitTextToSize(explanationText, maxWidth);
+        const explanationLines = doc.splitTextToSize(explanationText, maxWidth-30);
         doc.text(explanationLines, margin, yPosition);
         yPosition += explanationLines.length * 7 + 5;
   
