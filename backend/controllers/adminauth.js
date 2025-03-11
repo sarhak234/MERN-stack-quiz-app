@@ -1,15 +1,33 @@
+const jwt = require('jsonwebtoken');
+
 const adminauth=(req,res)=>{
     //ab dekho, hume bas ek bande kaa hi loginkarwana hai, har kisi ka nahi
     try {
+        const AdminData=[
+            {
+                name:'sudhir pawar',
+                email:'sudhirpawar786786@gmail.com',
+                password:'123sp234'
+            }
+        ]
         const {name,email,password}=req.body;
-    if(name.toLowerCase()=='sudhir pawar'&&email.toLowerCase()=='sudhirpawar786786@gmail.com'&&password.toLowerCase()=='123sp234'){
-        res.status(200).json(`your name email and password  is:${[name,email,password]}`)
-    }else{
-        res.status(500).json("something went wrong ")
-    }
+        const admin = AdminData.find(
+            (admin) =>
+                admin.name.toLowerCase() === name.toLowerCase() &&
+                admin.email.toLowerCase() === email.toLowerCase() &&
+                admin.password === password // Keep password case-sensitive
+        );
+        if (admin) {
+            const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            res.status(200).json({ message: "Admin logged in successfully", token: token });
+        } else {
+            res.status(401).json({ error: "Invalid credentials" });
+        }
     } catch (error) {
-        res.send('something went wrong')
+        console.error("Error in adminauth:", error);  // Log the actual error
+        res.status(500).json({ error: "Something went wrong", details: error.message });
     }
+    
     
 }
 

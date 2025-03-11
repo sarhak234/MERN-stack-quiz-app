@@ -20,23 +20,21 @@ const saveQuizResults = async (req, res) => {
 
    
 ;
-    if (!resultsdata || !Array.isArray(resultsdata) || resultsdata.length === 0) {
-      return res.status(400).json({ message: "Invalid or missing quiz resultsdata" });
-    }
+    
 
     const testCode = userdata.testcode;
     if (!testCode) {
       return res.status(400).json({ message: "Test code not found for user" });
     }
 
-    console.log(resultsdata.explaination)
+    
 
     const newResult = new Result({
       userId: userdata._id,
       name: userdata.name,
       userclass: userdata.userclass,
       testcode: testCode,
-      resultsdata,
+      results:resultsdata,
     });
 
     await newResult.save();
@@ -46,7 +44,7 @@ const saveQuizResults = async (req, res) => {
       name: userdata.name,
       userclass: userdata.userclass,
       testcode: testCode,
-      resultsdata,
+      results:resultsdata,
     });
   } catch (error) {
     console.error("Error saving quiz results:", error);

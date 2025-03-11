@@ -5,7 +5,7 @@ const resultSchema = new mongoose.Schema({
     name: { type: String, required: true },
     userclass: { type: String, required: true },
     testcode: { type: String, required: true },
-    results: { type: Array, required: true } 
+    results: { type: String, required: true } 
 }, { timestamps: true }); 
 const Result = mongoose.model('Result', resultSchema);
 

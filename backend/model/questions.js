@@ -9,7 +9,10 @@ const questionSchema = new mongoose.Schema({
             options: { type: [String], required: true },
             answer: { type: String, required: true },
             explaination :{type: String, required: true},
-            testcode:{ type: String, required: true }
+            addScore:{type: String, required: true},
+            subScore:{type: String, required: true},
+            testcode:{type: String, required: true},
+            quizname:{ type: String, required: true }
         }
     ]
 });
