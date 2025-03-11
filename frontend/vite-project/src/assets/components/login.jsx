@@ -59,7 +59,7 @@ function Login() {
               <li>🌐 Ensure a stable internet connection before starting the test.</li>
               <li>🆔 Fill in your details correctly. Use the provided unique test code.</li>
               <li>✅ Each question has only one correct option. Choose carefully.</li>
-              <li>⏳ You have 30 minutes to complete the test. The timer starts once you begin.</li>
+              <li>⏳ You have provided time to complete the test. The timer starts once you begin.</li>
               <li>⬆ Click the "Submit Test" button once you are done. The test auto-submits when time ends.</li>
               <li>🚫 Avoid using unfair means; the test is monitored for integrity.</li>
               <li>💻 Do not interrupt the test window. Any interruption will be recorded.</li>
