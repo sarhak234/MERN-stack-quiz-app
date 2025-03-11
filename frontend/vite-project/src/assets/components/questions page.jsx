@@ -212,7 +212,7 @@ function QuestionsPage() {
                       }
                       className={`w-full p-3 sm:p-4 text-left rounded-lg sm:rounded-xl border-2 transition-all duration-200 text-sm sm:text-base ${
                         answers[q.id] === option
-                          ? "bg-blue-500 text-white border-blue-600 shadow-md"
+                          ? "bg-cyan-400 text-white border-blue-600 shadow-md"
                           : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
                       }`}
                     >
@@ -232,10 +232,10 @@ function QuestionsPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-full text-white font-semibold text-base sm:text-lg shadow-lg transition-all duration-300 ${
+                className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-md text-white font-semibold text-base sm:text-lg shadow-lg transition-all duration-300 ${
                   loading
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 hover:scale-105"
+                    : "bg-cyan-400 hover:from-blue-600 hover:to-cyan-600 hover:scale-105"
                 }`}
               >
                 {loading ? (
