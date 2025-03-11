@@ -311,7 +311,8 @@ function ResultPage() {
             {/* Score Summary */}
             <div className="p-4 sm:p-6 bg-yellow-500 text-white rounded-lg shadow-md text-center">
               <p className="text-lg sm:text-xl font-semibold">
-                Final Score: {calculateScore().finalScore}/{calculateScore().totalScore}
+                Final Score: {quizResults.filter((q) => q.userAnswer === q.correctAnswer).length} / {
+          quizResults.length}
               </p>
               <p className="text-sm sm:text-base mt-2">
                 Screen Minimized: {minimizeCount} times
