@@ -5,6 +5,7 @@ import AdminPannel from './adminpannel';
 import AdminLogin from './adminlogin';
 import Layout from './layout'
 import Result from './result'
+import AdminDashboard from './admindashboard'
 
 
 function RouterComponent() {
@@ -15,6 +16,7 @@ function RouterComponent() {
         <Route path="/adminlogin" element={<AdminLogin/>} />
         <Route path="/adminpannel" element={<AdminPannel/>} />
         <Route path='/layout' element={<Layout/>}/>
+        <Route path='/admindashboard' element={<AdminDashboard/>}/>
         <Route path='/result' element={<Result/>}/>
       </Routes>
     </Router>

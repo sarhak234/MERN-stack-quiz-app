@@ -19,6 +19,7 @@ function AdminLogin() {
       const response = await axios.post(`${API_URL}/api/admin/auth`, { name, email, password });
 
       if (response.status === 200) {
+        localStorage.setItem('admintoken',response.data.token)
         setRedirect(true);
       } else {
         setErrorMessage('Something went wrong. Please try again.');
