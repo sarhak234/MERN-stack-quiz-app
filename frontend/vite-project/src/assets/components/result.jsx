@@ -1,226 +1,321 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import jsPDF from "jspdf";
 import axios from "axios";
-import { Toaster, toast } from "react-hot-toast";
-import Header from "./header";
+import { useNavigate } from "react-router-dom";
 
-function QuestionsPage() {
-  const [data, setData] = useState(null);
-  const [answers, setAnswers] = useState({});
-  const [loading, setLoading] = useState(false);
+function ResultPage() {
+  const [userInfo, setUserInfo] = useState(null);
+  const [quizResults, setQuizResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [minimizeCount, setMinimizeCount] = useState(0);
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(
-    () => parseInt(localStorage.getItem("quizTime")) || null
-  );
-  const [minimizeCount, setMinimizeCount] = useState(
-    () => parseInt(localStorage.getItem("minimizeCount")) || 0
-  );
-  const minimizeStart = useRef(null);
+
+  const addScore = parseInt(localStorage.getItem("addScore")) || 0;
+  const subScore = parseInt(localStorage.getItem("subScore")) || 0;
 
   useEffect(() => {
-    localStorage.removeItem("quizTime");
-    localStorage.removeItem("minimizeCount");
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/user/auth");
-      return;
-    }
-
-    const fetchData = async () => {
+    const fetchUserData = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/");
+          setLoading(false);
+          return;
+        }
+
+        const storedResults = localStorage.getItem("quizResults");
+        if (!storedResults) {
+          setError("No quiz results found.");
+          setLoading(false);
+          return;
+        }
+
+        const parsedResults = JSON.parse(storedResults);
+        if (!Array.isArray(parsedResults) || parsedResults.length === 0) {
+          setError("Invalid or empty quiz results.");
+          setLoading(false);
+          return;
+        }
+
+        setQuizResults(parsedResults);
+
+        const correctAnswers = parsedResults.filter(
+          (q) => q.userAnswer === q.correctAnswer
+        ).length;
+        const incorrectAnswers = parsedResults.length - correctAnswers;
+        const finalScore =
+          correctAnswers * addScore - incorrectAnswers * subScore;
+        const totalScore = parsedResults.length * addScore;
+        const scoreToSend = `${totalScore}/${finalScore}`;
+
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/test/page`,
-          { token },
-          { headers: { Authorization: `Bearer ${token}` } }
+          `${import.meta.env.VITE_API_URL}/api/score/page`,
+          { resultsdata: scoreToSend },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
-        setData(response.data);
 
-        const numQuestions = response.data.questions.length || 10;
-        const quizTime =
-          parseInt(localStorage.getItem("quizTime")) || numQuestions * 60;
-
-        setTimeLeft(quizTime);
-        localStorage.setItem("quizTime", quizTime);
+        if (response.data) {
+          setUserInfo(response.data);
+        } else {
+          setError("Invalid response from the server.");
+        }
       } catch (error) {
-        console.error(
-          "Error fetching data:",
-          error.response?.data || error.message
-        );
+        console.error("Error fetching results:", error);
+        setError("Failed to fetch results. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [navigate]);
+    fetchUserData();
+  }, [addScore, subScore, navigate]);
 
   useEffect(() => {
-    if (timeLeft === null) return;
+    const count = parseInt(localStorage.getItem("minimizeCount")) || 0;
+    setMinimizeCount(count);
+  }, []);
 
-    if (timeLeft <= 0) {
-      setTimeLeft(0);
-      localStorage.removeItem("quizTime");
-      toast.error("⏳ Time's up! Submitting automatically.", {
-        duration: 5000,
-      });
-      setTimeout(handleSubmit, 2000);
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        const newTime = prev - 1;
-        if (newTime <= 0) {
-          clearInterval(timer);
-          localStorage.removeItem("quizTime");
-          return 0;
-        }
-
-        localStorage.setItem("quizTime", newTime);
-
-        if (newTime === 600) toast("⚠️ 10 minutes left!", { icon: "⏳" });
-        if (newTime === 300) toast("⚠️ 5 minutes left!", { icon: "⏳" });
-        if (newTime === 120) toast("⚠️ 2 minutes left!", { icon: "⏳" });
-        if (newTime === 60)
-          toast.error("⚠️ 1 minute left! Hurry up!", { duration: 3000 });
-
-        return newTime;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  const handleSubmit = async () => {
-    if (!data) return;
-
-    const unansweredQuestions = data.questions.filter((q) => !answers[q.id]);
-    if (unansweredQuestions.length > 0 && timeLeft > 0) {
-      toast.error(
-        `⚠️ Please answer all questions first! (${
-          unansweredQuestions.length
-        } question${unansweredQuestions.length > 1 ? "s" : ""} remaining)`,
-        { duration: 3000 }
-      );
-      return;
-    }
-
-    setLoading(true);
-    const resultArray = data.questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-      userAnswer: answers[q.id] || null,
-      explaination: q.explaination,
-      correctAnswer: q.answer,
-    }));
-
-    localStorage.setItem("quizResults", JSON.stringify(resultArray));
-    toast.success("✅ Answers submitted successfully!", { duration: 3000 });
-
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/result");
-    }, 2000);
+  const calculateScore = () => {
+    const correctAnswers = quizResults.filter(
+      (q) => q.userAnswer === q.correctAnswer
+    ).length;
+    const incorrectAnswers = quizResults.length - correctAnswers;
+    const finalScore = correctAnswers * addScore - incorrectAnswers * subScore;
+    const totalScore = quizResults.length * addScore;
+    return { finalScore, totalScore };
   };
 
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+  const downloadPDF = () => {
+    const { finalScore, totalScore } = calculateScore();
+    const doc = new jsPDF();
+    const pageWidth = 180; // Max width for wrapping
+    const margin = 15;
+    let y = 20; // Initial Y position
+
+    // Title with improved styling
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(0, 51, 102); // Dark blue
+    doc.text("Quiz Results", 105, y, { align: "center" });
+    doc.setDrawColor(0, 51, 102);
+    doc.line(margin, y + 5, margin + pageWidth, y + 5); // Underline
+    y += 20;
+
+    // User Info Section with border
+    if (userInfo) {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.setDrawColor(150, 150, 150);
+      doc.roundedRect(margin - 5, y - 8, pageWidth + 10, 35, 3, 3, "S"); // Border
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Student Information", margin, y - 2);
+      doc.setFont("helvetica", "normal");
+      y += 8;
+      doc.text(`Name: ${userInfo.name}`, margin, y);
+      y += 8;
+      doc.text(`Class: ${userInfo.userclass}`, margin, y);
+      y += 8;
+      doc.text(`Test Code: ${userInfo.testcode}`, margin, y);
+      y += 15;
+    }
+
+    // Questions Section with dynamic gray box and dynamic positioning
+    quizResults.forEach((q, index) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // Question Number and Text with dynamic background
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      let questionLines = doc.splitTextToSize(
+        `${index + 1}. ${q.question}`,
+        pageWidth
+      );
+      const lineHeight = 6; // Height per line
+      const boxHeight = questionLines.length * lineHeight + 4; // Dynamic height + padding
+
+      // Draw dynamic gray background
+      doc.setFillColor(245, 245, 245); // Very light gray
+      doc.rect(margin - 5, y - 6, pageWidth + 10, boxHeight, "F");
+
+      // Add question text
+      doc.text(questionLines, margin, y);
+      y += boxHeight; // Move y to the bottom of the gray box
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+
+      const addWrappedText = (label, text, color = [0, 0, 0]) => {
+        if (text) {
+          doc.setTextColor(...color);
+          let lines = doc.splitTextToSize(`${label} ${text}`, pageWidth - 10);
+          doc.text(lines, margin + 2, y);
+          y += lines.length * lineHeight; // Dynamic height based on lines
+          doc.setTextColor(0, 0, 0); // Reset to black
+          return lines.length * lineHeight; // Return height for positioning
+        }
+        return 0; // Return 0 if no text
+      };
+
+      // Your Answer (Black) with dynamic mt
+      y += 2; // Initial margin after gray box
+      addWrappedText("Your Answer:", q.userAnswer || "Not Answered");
+
+      // Correct Answer (Black) with Correct/Incorrect and dynamic mt
+      y += 2; // Margin after Your Answer
+      const correctAnswerHeight = addWrappedText(
+        "Correct Answer:",
+        q.correctAnswer
+      );
+      const isCorrect = q.userAnswer === q.correctAnswer;
+      const statusText = isCorrect ? "Correct" : "Incorrect";
+      const statusColor = isCorrect ? [0, 128, 0] : [255, 0, 0];
+      doc.setTextColor(...statusColor);
+      doc.text(statusText, margin + 130, y - correctAnswerHeight); // Align with Correct Answer
+
+      // Explanation (Black) with dynamic mt
+      y += 2; // Margin after Correct Answer
+      addWrappedText("Explanation:", q.explaination);
+
+      y += 6; // Spacing between questions
+    });
+
+    // Summary Section (Screen Minimized and Final Score) at the end
+    if (y > 240) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(0, 51, 102);
+    doc.text("Summary", margin, y);
+    doc.line(margin, y + 3, margin + 50, y + 3);
+    y += 10;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(margin - 5, y - 8, pageWidth + 10, 30, 3, 3, "F");
+    y += 2;
+    doc.text(`Screen Minimized: ${minimizeCount} times`, margin, y);
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Final Score: ${finalScore}/${totalScore}`, margin, y);
+    y += 15;
+
+    // Add footer with page numbers and date
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Page ${i} of ${pageCount} | Date: March 11, 2025`, 105, 290, {
+        align: "center",
+      });
+    }
+
+    doc.save("quiz_results.pdf");
   };
 
   return (
-    <div className="min-h-screen bg-cyan-400 flex flex-col items-center">
-      <Toaster position="top-center" reverseOrder={false} />
-
-      {/* Header Section */}
-      <div className="w-full bg-white shadow-md py-3 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-2 sm:mb-0">
-          Automaura IT Solutions
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-cyan-400 mb-6">
+          Quiz Results
         </h1>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div
-            className={`text-base sm:text-lg font-semibold ${
-              timeLeft <= 60 ? "text-red-500" : "text-red-500"
-            }`}
-          >
-            ⏳ {formatTime(timeLeft)}
+
+        {loading ? (
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400 mx-auto"></div>
+            <p className="mt-4 text-lg text-gray-600">Loading results...</p>
           </div>
-          <span className="text-xs sm:text-sm text-red-500">
-            Minimized: {minimizeCount}
-          </span>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="w-full max-w-3xl p-4 sm:p-6 flex-grow">
-        {data ? (
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            {data.questions.map((q, index) => (
-              <div
-                key={q.id}
-                className="bg-white rounded-lg shadow-md p-4 transition-all hover:shadow-xl"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  {index + 1}. {q.question}
-                </h3>
-
-                {/* Options */}
-                <div className="grid gap-2">
-                  {q.options.map((option, idx) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() =>
-                        setAnswers((prev) => ({ ...prev, [q.id]: option }))
-                      }
-                      className={`w-full p-3 text-left rounded-lg border-2 transition-all duration-200 text-sm ${
-                        answers[q.id] === option
-                          ? "bg-cyan-500 text-white border-cyan-600 shadow-md"
-                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                      }`}
-                    >
-                      <span className="font-medium mr-2">
-                        {String.fromCharCode(65 + idx)}.
-                      </span>
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* Submit Button */}
-            <div className="flex justify-center mt-6">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading}
-                className={`w-full sm:w-auto px-6 py-3 rounded-full text-white font-semibold text-lg shadow-lg transition-all duration-300 ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 scale-105"
-                }`}
-              >
-                {loading ? "Submitting..." : "Submit Answers"}
-              </button>
+        ) : error ? (
+          <p className="text-center text-red-500 text-lg">{error}</p>
+        ) : userInfo && quizResults.length > 0 ? (
+          <>
+            <div className="bg-cyan-400 text-white p-4 rounded-lg mb-6 shadow-md">
+              <p className="text-base sm:text-lg font-semibold">
+                Name: {userInfo.name}
+              </p>
+              <p className="text-base sm:text-lg font-semibold">
+                Class: {userInfo.userclass}
+              </p>
+              <p className="text-base sm:text-lg font-semibold">
+                Test Code: {userInfo.testcode}
+              </p>
             </div>
-          </form>
+
+            <div className="space-y-6 mb-6">
+              {quizResults.map((q, index) => (
+                <div
+                  key={index}
+                  className="p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
+                >
+                  <p className="text-base sm:text-lg font-semibold text-cyan-400">
+                    {index + 1}. {q.question}
+                  </p>
+                  <p className="mt-2 text-sm sm:text-base">
+                    Your Answer:{" "}
+                    <span className="font-medium">
+                      {q.userAnswer || "Not Answered"}
+                    </span>
+                  </p>
+                  <p className="text-sm sm:text-base">
+                    Correct Answer:{" "}
+                    <span className="font-medium">{q.correctAnswer}</span>
+                  </p>
+                  <p className="text-sm sm:text-base">
+                    <span
+                      className={
+                        q.userAnswer === q.correctAnswer
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {q.userAnswer === q.correctAnswer
+                        ? "Correct"
+                        : "Incorrect"}
+                    </span>
+                  </p>
+                  <p className="text-sm sm:text-gray-600 mt-2">
+                    Explanation: {q.explaination}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center text-lg sm:text-xl font-semibold text-cyan-400">
+              Final Score: {calculateScore().finalScore}/
+              {calculateScore().totalScore}
+            </div>
+
+            <button
+              onClick={downloadPDF}
+              className="mt-6 w-[100%] sm:w-auto px-6 py-2 sm:py-3 bg-cyan-400 text-white rounded-lg font-semibold hover:bg-cyan-500 transition-colors duration-200"
+            >
+              Download PDF
+            </button>
+          </>
         ) : (
-          <div className="text-center text-white">Loading questions...</div>
+          <p className="text-center text-gray-600 text-lg">
+            No results available.
+          </p>
         )}
       </div>
-
-      {/* Footer */}
-      <footer className="w-full py-3 text-center text-gray-500 text-xs bg-white shadow-inner">
-        © 2025 Automaura IT Solutions. All rights reserved.
-      </footer>
     </div>
   );
 }
 
-export default QuestionsPage;
-
-
-
+export default ResultPage;
