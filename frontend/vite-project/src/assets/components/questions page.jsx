@@ -15,13 +15,20 @@ function QuestionsPage() {
   const [minimizeCount, setMinimizeCount] = useState(
     () => parseInt(localStorage.getItem("minimizeCount")) || 0
   );
+  const [addScore, setAddScore] = useState();
+  const [subScore, setSubScore] = useState();
   const minimizeStart = useRef(null);
 
+  // Clear localStorage on initial load
   useEffect(() => {
     localStorage.removeItem("quizTime");
     localStorage.removeItem("minimizeCount");
+    // Optionally clear scores here if you want a fresh start
+    localStorage.removeItem("addScore");
+    localStorage.removeItem("subScore");
   }, []);
 
+  // Fetch quiz data
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -55,6 +62,7 @@ function QuestionsPage() {
     fetchData();
   }, [navigate]);
 
+  // Timer logic
   useEffect(() => {
     if (timeLeft === null) return;
 
@@ -107,15 +115,40 @@ function QuestionsPage() {
     }
 
     setLoading(true);
-    const resultArray = data.questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-      userAnswer: answers[q.id] || null,
-      explaination: q.explaination,
-      correctAnswer: q.answer,
-    }));
 
+    // Calculate scores
+    let correctCount = 0;
+    let incorrectCount = 0;
+
+    let totalAddScore = 0;
+    let totalSubScore = 0;
+
+    const resultArray = data.questions.map((q) => {
+      const isCorrect = answers[q.id] === q.answer;
+       totalAddScore = q.addScore || 0;
+       totalSubScore = q.subScore || 0;
+
+      
+
+      return {
+        question: q.question,
+        options: q.options,
+        userAnswer: answers[q.id] || null,
+        explaination: q.explaination,
+        correctAnswer: q.answer,
+      };
+    });
+
+    // Update scores in state and localStorage
+    setAddScore(totalAddScore);
+    setSubScore(totalSubScore);
+    localStorage.setItem("addScore", totalAddScore.toString());
+    localStorage.setItem("subScore", totalSubScore.toString());
     localStorage.setItem("quizResults", JSON.stringify(resultArray));
+
+    totalAddScore=0
+    totalSubScore=0
+
     toast.success("✅ Answers submitted successfully!", { duration: 3000 });
 
     setTimeout(() => {
