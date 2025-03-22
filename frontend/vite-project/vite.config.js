@@ -1,14 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(), // React plugin
+    tailwindcss(), // Tailwind CSS plugin
+  ],
   base: '/',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
   },
   server: {
-    historyApiFallback: true
-  }
+    historyApiFallback: true, // Fixes 404 errors on page reload in SPA
+  },
 });
-
