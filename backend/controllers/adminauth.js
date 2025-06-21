@@ -8,6 +8,11 @@ const adminauth=(req,res)=>{
                 name:'sudhir pawar',
                 email:'sudhirpawar786786@gmail.com',
                 password:'123sp234'
+            },
+            {
+                name:'sarthak mehta',
+                email:'sm123456@gmail.com',
+                password:'123sm234'
             }
         ]
         const {name,email,password}=req.body;
