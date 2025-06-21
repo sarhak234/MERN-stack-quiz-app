@@ -170,7 +170,7 @@ function QuestionsPage() {
       {/* Header Section */}
       <div className="w-full bg-white shadow-md py-3 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-10">
         <h1 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-2 sm:mb-0">
-          Automaura IT Solutions
+         Quiz App
         </h1>
         <div className="flex items-center gap-2 sm:gap-4">
           <div
