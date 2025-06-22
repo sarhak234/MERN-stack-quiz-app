@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast, Toaster } from 'react-hot-toast'; // Import Toaster along with toast
+import { toast, Toaster } from 'react-hot-toast';
 
 function AdminDashboard() {
   const [resultData, setResultData] = useState([]);
@@ -21,15 +21,12 @@ function AdminDashboard() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        console.log("Fetching from:", `${import.meta.env.VITE_API_URL}/api/admin/db`);
+
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/db`, {});
-        
-        console.log("Fetched data:", response.data);
+
         setResultData(response.data.results || []);
         setTestCodes(response.data.quizzes || []);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
         setError("Failed to load data. Please try again later.");
       } finally {
         setIsLoading(false);
@@ -41,13 +38,32 @@ function AdminDashboard() {
 
   const copyToClipboard = (code) => {
     navigator.clipboard.writeText(code);
-    toast.success(`Copied: ${code}`); // Using toast.success for better styling
+    toast.success(`Copied: ${code}`);
+  };
+
+  const deleteTest = async (testCode) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete the test with code "${testCode}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/db`, {
+        deleteTestCode: testCode,
+      });
+
+      if (response.data.quizzes) {
+        toast.success("Test deleted successfully!");
+        setTestCodes(response.data.quizzes || []);
+      } else {
+        toast.error("Failed to delete test.");
+      }
+    } catch (error) {
+      toast.error("Error deleting test.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-cyan-50 flex flex-col">
-      {/* Add Toaster component here */}
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 2000,
@@ -62,7 +78,7 @@ function AdminDashboard() {
           },
         }}
       />
-      
+
       <header className="bg-cyan-400 text-white p-4 sticky top-0 z-10 shadow-md">
         <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center">Admin Dashboard</h1>
@@ -162,12 +178,20 @@ function AdminDashboard() {
                       <td className="p-4">{quiz.quizName}</td>
                       <td className="p-4">{quiz.testCode}</td>
                       <td className="p-4">
-                        <button
-                          onClick={() => copyToClipboard(quiz.testCode)}
-                          className="bg-cyan-400 text-white px-3 py-1 rounded-md hover:bg-cyan-400 transition-colors"
-                        >
-                          Copy
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => copyToClipboard(quiz.testCode)}
+                            className="bg-cyan-400 text-white px-3 py-1 rounded-md hover:bg-cyan-400 transition-colors"
+                          >
+                            Copy
+                          </button>
+                          <button
+                            onClick={() => deleteTest(quiz.testCode)}
+                            className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
