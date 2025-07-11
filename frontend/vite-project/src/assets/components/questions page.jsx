@@ -23,7 +23,6 @@ function QuestionsPage() {
   useEffect(() => {
     localStorage.removeItem("quizTime");
     localStorage.removeItem("minimizeCount");
-    // Optionally clear scores here if you want a fresh start
     localStorage.removeItem("addScore");
     localStorage.removeItem("subScore");
   }, []);
@@ -100,6 +99,27 @@ function QuestionsPage() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // ✅ Minimize / Tab switch detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const updatedCount = minimizeCount + 1;
+        setMinimizeCount(updatedCount);
+        localStorage.setItem("minimizeCount", updatedCount.toString());
+
+        toast.error("⚠️ You switched tabs or minimized the screen!", {
+          duration: 3000,
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [minimizeCount]);
+
   const handleSubmit = async () => {
     if (!data) return;
 
@@ -116,7 +136,6 @@ function QuestionsPage() {
 
     setLoading(true);
 
-    // Calculate scores
     let correctCount = 0;
     let incorrectCount = 0;
 
@@ -125,10 +144,8 @@ function QuestionsPage() {
 
     const resultArray = data.questions.map((q) => {
       const isCorrect = answers[q.id] === q.answer;
-       totalAddScore = q.addScore || 0;
-       totalSubScore = q.subScore || 0;
-
-      
+      totalAddScore = q.addScore || 0;
+      totalSubScore = q.subScore || 0;
 
       return {
         question: q.question,
@@ -139,15 +156,14 @@ function QuestionsPage() {
       };
     });
 
-    // Update scores in state and localStorage
     setAddScore(totalAddScore);
     setSubScore(totalSubScore);
     localStorage.setItem("addScore", totalAddScore.toString());
     localStorage.setItem("subScore", totalSubScore.toString());
     localStorage.setItem("quizResults", JSON.stringify(resultArray));
 
-    totalAddScore=0
-    totalSubScore=0
+    totalAddScore = 0;
+    totalSubScore = 0;
 
     toast.success("✅ Answers submitted successfully!", { duration: 3000 });
 
@@ -170,7 +186,7 @@ function QuestionsPage() {
       {/* Header Section */}
       <div className="w-full bg-white shadow-md py-3 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-10">
         <h1 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-2 sm:mb-0">
-         Quiz App
+          Quiz App
         </h1>
         <div className="flex items-center gap-2 sm:gap-4">
           <div
@@ -199,7 +215,6 @@ function QuestionsPage() {
                   {index + 1}. {q.question}
                 </h3>
 
-                {/* Options */}
                 <div className="grid gap-2">
                   {q.options.map((option, idx) => (
                     <button
@@ -224,7 +239,6 @@ function QuestionsPage() {
               </div>
             ))}
 
-            {/* Submit Button */}
             <div className="flex justify-center mt-6">
               <button
                 type="button"
@@ -245,7 +259,6 @@ function QuestionsPage() {
         )}
       </div>
 
-      {/* Footer */}
       <footer className="w-full py-3 text-center text-gray-500 text-xs bg-white shadow-inner">
         © 2025 Automaura IT Solutions. All rights reserved.
       </footer>
